@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Організатор завдань</title>
+    <link rel="stylesheet" href="./css/app.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Організатор завдань</h1>
+    </header>
+
+    <div class="container">
+      <div class="controls">
+        <a href="progress.html" class="progress-btn">Перегляд прогресу</a>
+        <button class="add-task-btn">Додати завдання</button>
+        <button class="add-column-btn">Додати категорію</button>
+
+        <button class="btn" id="downloadLocalStorage">Зберегти</button>
+        <input
+          type="file"
+          id="uploadLocalStorage"
+          accept=".json"
+          style="display: none"
+        />
+        <button class="btn" id="selectFileButton">Відкрити</button>
+      </div>
+
+      <div class="columns-container" id="columns-container">
+        <!-- Columns will be generated dynamically -->
+      </div>
+    </div>
+
+    <!-- Modal for adding/editing tasks -->
+    <div class="modal" id="task-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="modal-title">Додати завдання</h3>
+          <button class="close-modal">&times;</button>
+        </div>
+        <form id="task-form">
+          <input type="hidden" id="edit-task-id" />
+          <div class="form-group">
+            <label for="task-title">Назва завдання:</label>
+            <input type="text" id="task-title" required />
+          </div>
+          <div class="form-group">
+            <label for="task-duration">Очікувана тривалість (хв):</label>
+            <input type="number" id="task-duration" min="1" required />
+          </div>
+          <div class="form-group">
+            <label for="task-column">Стовпчик:</label>
+            <select id="task-column" required>
+              <!-- Options will be filled dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="task-categories">Категорії:</label>
+            <div class="categories-input" id="categories-container"></div>
+            <div style="display: flex; gap: 5px; margin-top: 5px">
+              <input
+                type="text"
+                id="new-category"
+                class="add-category-input"
+                placeholder="Нова категорія"
+              />
+              <button
+                type="button"
+                id="add-category-btn"
+                class="btn btn-secondary"
+              >
+                Додати
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="task-scheduled-date">Дата призначення:</label>
+            <input type="datetime-local" id="task-scheduled-date" required />
+          </div>
+          <div class="form-group">
+            <label for="task-deadline">Дедлайн (необов'язково):</label>
+            <input type="datetime-local" id="task-deadline" />
+          </div>
+          <div class="form-group">
+            <label for="task-repeat">Повторення:</label>
+            <select id="task-repeat">
+              <option value="none">Не повторювати</option>
+              <option value="daily">Щодня</option>
+              <option value="weekly">Щотижня</option>
+              <option value="monthly">Щомісяця</option>
+            </select>
+
+            <!-- Weekly repetition options -->
+            <div class="repetition-options" id="weekly-options">
+              <label>Дні тижня:</label>
+              <div class="days-of-week">
+                <label class="day-checkbox"
+                  ><input type="checkbox" name="weekday" value="1" /> Пн</label
+                >
+                <label class="day-checkbox"
+                  ><input type="checkbox" name="weekday" value="2" /> Вт</label
+                >
+                <label class="day-checkbox"
+                  ><input type="checkbox" name="weekday" value="3" /> Ср</label
+                >
+                <label class="day-checkbox"
+                  ><input type="checkbox" name="weekday" value="4" /> Чт</label
+                >
+                <label class="day-checkbox"
+                  ><input type="checkbox" name="weekday" value="5" /> Пт</label
+                >
+                <label class="day-checkbox"
+                  ><input type="checkbox" name="weekday" value="6" /> Сб</label
+                >
+                <label class="day-checkbox"
+                  ><input type="checkbox" name="weekday" value="0" /> Нд</label
+                >
+              </div>
+            </div>
+
+            <!-- Monthly repetition options -->
+            <div class="repetition-options" id="monthly-options">
+              <label>Дні місяця:</label>
+              <div class="days-of-month">
+                <!-- Will be generated dynamically -->
+              </div>
+            </div>
+          </div>
+          <div class="btn-container">
+            <button type="button" class="btn btn-secondary close-modal-btn">
+              Скасувати
+            </button>
+            <button type="submit" class="btn btn-primary">Зберегти</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal for adding a new column -->
+    <div class="modal" id="column-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Додати категорію</h3>
+          <button class="close-modal">&times;</button>
+        </div>
+        <form id="column-form">
+          <div class="form-group">
+            <label for="column-title">Назва категорії:</label>
+            <input type="text" id="column-title" required />
+          </div>
+          <div class="btn-container">
+            <button type="button" class="btn btn-secondary close-modal-btn">
+              Скасувати
+            </button>
+            <button type="submit" class="btn btn-primary">Додати</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal for marking a task as complete -->
+    <div class="modal" id="complete-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Позначити завдання як виконане</h3>
+          <button class="close-modal">&times;</button>
+        </div>
+        <form id="complete-form">
+          <input type="hidden" id="complete-task-id" />
+          <div class="form-group">
+            <label for="actual-duration">Фактична тривалість (хв):</label>
+            <input type="number" id="actual-duration" min="1" required />
+          </div>
+          <div class="form-group">
+            <label for="completion-date">Дата завершення:</label>
+            <input type="datetime-local" id="completion-date" required />
+          </div>
+          <div class="btn-container">
+            <button type="button" class="btn btn-secondary close-modal-btn">
+              Скасувати
+            </button>
+            <button type="submit" class="btn btn-primary">Завершити</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>

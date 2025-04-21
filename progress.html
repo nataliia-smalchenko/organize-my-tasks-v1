@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прогрес виконання завдань</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-grey: #f4f4f4;
+            --border-color: #ddd;
+            --text-color: #333;
+            --success-color: #27ae60;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .header-nav {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .back-button {
+            background-color: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .back-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .stats-header {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-card {
+            background-color: white;
+            padding: 1.2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .filter-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .date-range {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .date-input {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .apply-filter {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .apply-filter:hover {
+            background-color: #2980b9;
+        }
+        
+        .days-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .day-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .day-header {
+            background-color: var(--light-grey);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .day-header:hover {
+            background-color: #e8e8e8;
+        }
+        
+        .day-date {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .day-stats {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .day-toggle {
+            font-size: 1.2rem;
+            transform: rotate(0deg);
+            transition: transform 0.3s;
+        }
+        
+        .day-toggle.open {
+            transform: rotate(180deg);
+        }
+        
+        .day-details {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
+        }
+        
+        .day-details.open {
+            padding: 1rem;
+            max-height: 1000px;
+        }
+        
+        .tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .task-item {
+            background-color: var(--light-grey);
+            padding: 1rem;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .task-info {
+            flex-grow: 1;
+        }
+        
+        .task-title {
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+        
+        .task-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .task-time {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .category-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.5rem;
+        }
+        
+        .category-tag {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            background-color: #e0e0e0;
+            color: white;
+        }
+        
+        .chart-container {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .chart-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .chart-toggle {
+            background-color: var(--light-grey);
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        
+        .chart-toggle:hover {
+            background-color: #e8e8e8;
+        }
+        
+        .chart {
+            width: 100%;
+            height: 300px;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 2rem 0;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .stat-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filter-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .date-range {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .task-time {
+                align-self: flex-start;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stat-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-nav">
+            <button class="back-button" id="back-button">← Назад</button>
+        </div>
+        <h1>Прогрес виконання завдань</h1>
+    </header>
+    
+    <div class="container">
+        <div class="stats-header">
+            <h2>Загальна статистика</h2>
+        </div>
+        
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="stat-value" id="total-tasks">0</div>
+                <div class="stat-label">Завершених завдань</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-time">0 год</div>
+                <div class="stat-label">Загальний час</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avg-per-day">0</div>
+                <div class="stat-label">Середньо на день</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avg-time">0 хв</div>
+                <div class="stat-label">Середній час на завдання</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Динаміка завдань</h3>
+                <button class="chart-toggle" id="chart-toggle">Показати час</button>
+            </div>
+            <canvas id="tasksChart" class="chart"></canvas>
+        </div>
+        
+        <div class="filter-controls">
+            <div class="date-range">
+                <label for="start-date">З:</label>
+                <input type="date" id="start-date" class="date-input">
+                <label for="end-date">По:</label>
+                <input type="date" id="end-date" class="date-input">
+            </div>
+            <button class="apply-filter" id="apply-filter">Застосувати</button>
+        </div>
+        
+        <div class="days-container" id="days-container">
+            <!-- Days will be generated dynamically -->
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const totalTasksEl = document.getElementById('total-tasks');
+            const totalTimeEl = document.getElementById('total-time');
+            const avgPerDayEl = document.getElementById('avg-per-day');
+            const avgTimeEl = document.getElementById('avg-time');
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const applyFilterBtn = document.getElementById('apply-filter');
+            const daysContainer = document.getElementById('days-container');
+            const backButton = document.getElementById('back-button');
+            const chartToggle = document.getElementById('chart-toggle');
+            
+            // Chart
+            let tasksChart = null;
+            const chartCanvas = document.getElementById('tasksChart');
+            
+            // Store category colors from localStorage
+            let categoryColors = {};
+            
+            // Tasks data
+            let tasks = [];
+            let filteredTasks = [];
+            let dailyData = [];
+            
+            // Date range
+            let startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30); // Default to last 30 days
+            let endDate = new Date();
+            
+            // Set default date inputs
+            startDateInput.value = formatDateForInput(startDate);
+            endDateInput.value = formatDateForInput(endDate);
+            
+            // Chart display mode
+            let chartMode = 'tasks'; // 'tasks' or 'time'
+            
+            // Initialize
+            loadData();
+            
+            // Load tasks and category colors from localStorage
+            function loadData() {
+                // Load tasks
+                const savedTasks = localStorage.getItem('tasks');
+                if (savedTasks) {
+                    tasks = JSON.parse(savedTasks);
+                }
+                
+                // Load category colors
+                const savedColors = localStorage.getItem('categoryColors');
+                if (savedColors) {
+                    categoryColors = JSON.parse(savedColors);
+                }
+                
+                // Filter completed tasks
+                filterTasksByDate();
+            }
+            
+            // Filter tasks by date range
+            function filterTasksByDate() {
+                // Filter only completed tasks
+                const completedTasks = tasks.filter(task => task.completed);
+                
+                // Filter by date range
+                filteredTasks = completedTasks.filter(task => {
+                    if (!task.completionDate) return false;
+                    
+                    const completionDate = new Date(task.completionDate);
+                    return completionDate >= startDate && 
+                           completionDate <= new Date(endDate.getTime() + 86400000); // Include end date fully
+                });
+                
+                // Group tasks by day
+                groupTasksByDay();
+                
+                // Update UI
+                updateStats();
+                renderDays();
+                updateChart();
+            }
+            
+            // Group tasks by day
+            function groupTasksByDay() {
+                // Clear previous data
+                dailyData = [];
+                
+                // Create a map of dates to tasks
+                const tasksByDate = {};
+                
+                filteredTasks.forEach(task => {
+                    if (!task.completionDate) return;
+                    
+                    const completionDate = new Date(task.completionDate);
+                    const dateKey = formatDate(completionDate, 'yyyy-mm-dd');
+                    
+                    if (!tasksByDate[dateKey]) {
+                        tasksByDate[dateKey] = {
+                            date: completionDate,
+                            formattedDate: formatDate(completionDate, 'dd.mm.yyyy'),
+                            count: 0,
+                            totalTime: 0,
+                            tasks: []
+                        };
+                    }
+                    
+                    tasksByDate[dateKey].count++;
+                    tasksByDate[dateKey].totalTime += parseInt(task.actualDuration) || 0;
+                    tasksByDate[dateKey].tasks.push(task);
+                });
+                
+                // Convert map to array and sort by date
+                dailyData = Object.values(tasksByDate).sort((a, b) => b.date - a.date);
+            }
+            
+            // Update statistics
+            function updateStats() {
+                // Calculate stats
+                const totalTasks = filteredTasks.length;
+                
+                let totalTime = 0;
+                filteredTasks.forEach(task => {
+                    totalTime += parseInt(task.actualDuration) || 0;
+                });
+                
+                // Get unique days count
+                const uniqueDays = new Set();
+                filteredTasks.forEach(task => {
+                    if (task.completionDate) {
+                        uniqueDays.add(formatDate(new Date(task.completionDate), 'yyyy-mm-dd'));
+                    }
+                });
+                const daysCount = uniqueDays.size || 1;
+                
+                // Update DOM
+                totalTasksEl.textContent = totalTasks;
+                
+                // Format time
+                if (totalTime < 60) {
+                    totalTimeEl.textContent = `${totalTime} хв`;
+                } else {
+                    const hours = Math.floor(totalTime / 60);
+                    const minutes = totalTime % 60;
+                    totalTimeEl.textContent = `${hours} год ${minutes > 0 ? minutes + ' хв' : ''}`;
+                }
+                
+                avgPerDayEl.textContent = (totalTasks / daysCount).toFixed(1);
+                
+                // Average time per task
+                const avgTime = totalTasks > 0 ? Math.round(totalTime / totalTasks) : 0;
+                avgTimeEl.textContent = `${avgTime} хв`;
+            }
+            
+            // Render days
+            function renderDays() {
+                daysContainer.innerHTML = '';
+                
+                if (dailyData.length === 0) {
+                    const noData = document.createElement('div');
+                    noData.className = 'no-data';
+                    noData.textContent = 'Немає даних для відображення за вибраний період';
+                    daysContainer.appendChild(noData);
+                    return;
+                }
+                
+                dailyData.forEach(day => {
+                    // Create day card
+                    const dayCard = document.createElement('div');
+                    dayCard.className = 'day-card';
+                    
+                    // Create day header
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'day-header';
+                    dayHeader.addEventListener('click', () => toggleDayDetails(dayCard));
+                    
+                    const dayDate = document.createElement('div');
+                    dayDate.className = 'day-date';
+                    dayDate.textContent = day.formattedDate;
+                    
+                    const dayStats = document.createElement('div');
+                    dayStats.className = 'day-stats';
+                    
+                    // Format time
+                    let timeText;
+                    if (day.totalTime < 60) {
+                        timeText = `${day.totalTime} хв`;
+                    } else {
+                        const hours = Math.floor(day.totalTime / 60);
+                        const minutes = day.totalTime % 60;
+                        timeText = `${hours} год ${minutes > 0 ? minutes + ' хв' : ''}`;
+                    }
+                    
+                    dayStats.textContent = `${day.count} завдань · ${timeText}`;
+                    
+                    const dayToggle = document.createElement('div');
+                    dayToggle.className = 'day-toggle';
+                    dayToggle.innerHTML = '▼';
+                    
+                    dayHeader.appendChild(dayDate);
+                    dayHeader.appendChild(dayStats);
+                    dayHeader.appendChild(dayToggle);
+                    
+                    // Create day details (initially hidden)
+                    const dayDetails = document.createElement('div');
+                    dayDetails.className = 'day-details';
+                    
+                    // Create tasks list
+                    const tasksList = document.createElement('div');
+                    tasksList.className = 'tasks-list';
+                    
+                    // Sort tasks by completion time
+                    day.tasks.sort((a, b) => new Date(a.completionDate) - new Date(b.completionDate));
+                    
+                    // Add tasks to list
+                    day.tasks.forEach(task => {
+                        const taskItem = document.createElement('div');
+                        taskItem.className = 'task-item';
+                        
+                        const taskInfo = document.createElement('div');
+                        taskInfo.className = 'task-info';
+                        
+                        const taskTitle = document.createElement('div');
+                        taskTitle.className = 'task-title';
+                        taskTitle.textContent = task.title;
+                        
+                        const taskMeta = document.createElement('div');
+                        taskMeta.className = 'task-meta';
+                        
+                        // Format completion time
+                        const completionDate = new Date(task.completionDate);
+                        const completionTime = completionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        
+                        taskMeta.textContent = `Завершено о ${completionTime}`;
+                        
+                        // Create categories
+                        const categoryTags = document.createElement('div');
+                        categoryTags.className = 'category-tags';
+                        
+                        if (task.categories && task.categories.length > 0) {
+                            task.categories.forEach(category => {
+                                const categoryTag = document.createElement('span');
+                                categoryTag.className = 'category-tag';
+                                categoryTag.textContent = category;
+                                categoryTag.style.backgroundColor = categoryColors[category] || '#e0e0e0';
+                                categoryTags.appendChild(categoryTag);
+                            });
+                        }
+                        
+                        taskInfo.appendChild(taskTitle);
+                        taskInfo.appendChild(taskMeta);
+                        taskInfo.appendChild(categoryTags);
+                        
+                        const taskTime = document.createElement('div');
+                        taskTime.className = 'task-time';
+                        
+                        // Show both expected and actual time
+                        const expectedTime = parseInt(task.duration) || 0;
+                        const actualTime = parseInt(task.actualDuration) || 0;
+                        
+                        taskTime.textContent = `${actualTime} хв`;
+                        
+                        // Add efficiency indicator
+                        if (expectedTime > 0) {
+                            const ratio = actualTime / expectedTime;
+                            if (ratio < 0.9) {
+                                taskTime.style.backgroundColor = '#27ae60'; // Green for faster than expected
+                            } else if (ratio > 1.1) {
+                                taskTime.style.backgroundColor = '#e74c3c'; // Red for slower than expected
+                            }
+                        }
+                        
+                        taskItem.appendChild(taskInfo);
+                        taskItem.appendChild(taskTime);
+                        tasksList.appendChild(taskItem);
+                    });
+                    
+                    dayDetails.appendChild(tasksList);
+                    
+                    dayCard.appendChild(dayHeader);
+                    dayCard.appendChild(dayDetails);
+                    daysContainer.appendChild(dayCard);
+                });
+            }
+            
+            // Toggle day details
+            function toggleDayDetails(dayCard) {
+                const details = dayCard.querySelector('.day-details');
+                const toggle = dayCard.querySelector('.day-toggle');
+                
+                details.classList.toggle('open');
+                toggle.classList.toggle('open');
+            }
+            
+            // Update chart
+            function updateChart() {
+                // Destroy previous chart if exists
+                if (tasksChart) {
+                    tasksChart.destroy();
+                }
+                
+                // Prepare data for chart
+                const chartData = prepareChartData();
+                
+                // Create chart
+                tasksChart = new Chart(chartCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: chartMode === 'tasks' ? 'Завдання' : 'Час (хв)',
+                            data: chartMode === 'tasks' ? chartData.counts : chartData.times,
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: 'rgba(52, 152, 219, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Prepare data for chart
+            function prepareChartData() {
+                // Sort data chronologically
+                const sortedData = [...dailyData].sort((a, b) => a.date - b.date);
+                
+                // Extract labels, counts and times
+                const labels = sortedData.map(day => day.formattedDate);
+                const counts = sortedData.map(day => day.count);
+                const times = sortedData.map(day => day.totalTime);
+                
+                return { labels, counts, times };
+            }
+            
+            // Format date for display
+            function formatDate(date, format) {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                
+                if (format === 'yyyy-mm-dd') {
+                    return `${year}-${month}-${day}`;
+                } else if (format === 'dd.mm.yyyy') {
+                    return `${day}.${month}.${year}`;
+                }
+                
+                return `${day}.${month}.${year}`;
+            }
+            
+            // Format date for input element
+            function formatDateForInput(date) {
+                return formatDate(date, 'yyyy-mm-dd');
+            }
+            
+            // Event Listeners
+            
+            // Apply filter button
+            applyFilterBtn.addEventListener('click', function() {
+                startDate = new Date(startDateInput.value);
+                endDate = new Date(endDateInput.value);
+                filterTasksByDate();
+            });
+            
+            // Back button
+            backButton.addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+            
+            // Chart toggle
+            chartToggle.addEventListener('click', function() {
+                chartMode = chartMode === 'tasks' ? 'time' : 'tasks';
+                chartToggle.textContent = chartMode === 'tasks' ? 'Показати час' : 'Показати завдання';
+                updateChart();
+            });
+        });
+    </script>
+</body>
+</html>
