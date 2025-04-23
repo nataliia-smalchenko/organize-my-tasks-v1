@@ -630,6 +630,14 @@ document.addEventListener("DOMContentLoaded", function () {
         tasks[taskIndex] = { ...tasks[taskIndex], ...updatedData };
       }
 
+      if (tasks[taskIndex].columnId === "today") {
+        tasks[taskIndex].date = new Date().toISOString();
+      } else if (tasks[taskIndex].columnId === "tomorrow") {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tasks[taskIndex].date = tomorrow.toISOString();
+      }
+
       saveTasks();
       renderTasks(); // Re-render all tasks for simplicity
     }
@@ -907,186 +915,16 @@ document.addEventListener("DOMContentLoaded", function () {
           task.orderIndex = index * 10;
         });
 
+        normalizeOrderIndices();
+
         // Save the updated tasks array
         saveTasks();
-
-        // Update the task list in the DOM
-        updateTaskList();
       }
     }
 
     // Add this line to fix the issue in Safari
     return false;
   }
-
-  function updateTaskList() {
-    const taskList = document.querySelector(".task-list");
-    taskList.innerHTML = "";
-    normalizeOrderIndices();
-    tasks.forEach((task) => {
-      const taskElement = document.createElement("div");
-      taskElement.classList.add("task");
-      taskElement.dataset.id = task.id;
-      taskElement.textContent = task.name;
-      taskList.appendChild(taskElement);
-    });
-  }
-
-  //   function handleDrop(e) {
-  //     const isSafari = navigator.userAgent.includes("Safari");
-  //     const isChrome = navigator.userAgent.includes("Chrome");
-  //     const isFirefox = navigator.userAgent.includes("Firefox");
-  //     const isEdge = navigator.userAgent.includes("Edge");
-
-  //     if (isSafari) {
-  //       // Safari requires no special handling
-  //     } else if (isChrome) {
-  //       e.dataTransfer.dropEffect = "move";
-  //     } else if (isFirefox) {
-  //       e.dataTransfer.dropEffect = "move";
-  //     } else if (isEdge) {
-  //       e.dataTransfer.dropEffect = "move";
-  //     }
-
-  //     e.preventDefault();
-  //     const taskElements = Array.from(this.children).filter(
-  //       (el) =>
-  //         el.classList.contains("task") &&
-  //         el.dataset.id !== draggedTask.dataset.id
-  //     );
-
-  //     let targetIndex = -1;
-  //     for (let i = 0; i < taskElements.length; i++) {
-  //       const rect = taskElements[i].getBoundingClientRect();
-  //       const taskMiddle = rect.top + rect.height / 2;
-
-  //       if (e.clientY < taskMiddle) {
-  //         targetIndex = i;
-  //         break;
-  //       }
-  //     }
-
-  //     // Оновлюємо порядок завдань
-  //     if (targetIndex !== -1) {
-  //       const draggedTaskIndex = tasks.findIndex(
-  //         (task) => task.id === draggedTask.dataset.id
-  //       );
-  //       const targetTaskIndex = tasks.findIndex(
-  //         (task) => task.id === taskElements[targetIndex].dataset.id
-  //       );
-
-  //       if (draggedTaskIndex !== targetTaskIndex) {
-  //         tasks.splice(targetTaskIndex, 0, tasks.splice(draggedTaskIndex, 1)[0]);
-  //         tasks.forEach((task, index) => {
-  //           task.orderIndex = index * 10;
-  //         });
-  //         saveTasks();
-  //       }
-  //     }
-  //     this.classList.remove("dragover");
-
-  //     // Видаляємо індикатор при скиданні
-  //     const dropIndicator = this.querySelector(".drop-indicator");
-  //     if (dropIndicator) {
-  //       dropIndicator.remove();
-  //     }
-
-  //     // Перевіряємо, що це завдання, а не колонка
-  //     const isTaskDrag =
-  //       e.dataTransfer &&
-  //       e.dataTransfer.types &&
-  //       e.dataTransfer.types.includes("text/html") &&
-  //       e.dataTransfer.getData("text/html") === "taskDrag";
-
-  //     if (isTaskDrag) {
-  //       const taskId = e.dataTransfer.getData("taskId");
-  //       const targetColumnId = this.dataset.columnId;
-  //       const taskIndex = tasks.findIndex((task) => task.id === taskId);
-
-  //       if (taskIndex === -1) return;
-
-  //       const oldColumnId = tasks[taskIndex].columnId;
-  //       const draggedTask = tasks[taskIndex];
-
-  //       // Визначаємо нову позицію всередині стовпця
-  //       const mouseY = e.clientY;
-  //       const taskElements = Array.from(this.children).filter(
-  //         (el) => el.classList.contains("task") && el.dataset.id !== taskId
-  //       );
-
-  //       let newOrderIndex = 0;
-  //       let insertBefore = null;
-
-  //       if (taskElements.length > 0) {
-  //         // Знаходимо завдання, перед яким буде наша позиція
-  //         for (let i = 0; i < taskElements.length; i++) {
-  //           const rect = taskElements[i].getBoundingClientRect();
-  //           const taskMiddle = rect.top + rect.height / 2;
-
-  //           if (mouseY < taskMiddle) {
-  //             insertBefore = taskElements[i];
-  //             break;
-  //           }
-  //         }
-
-  //         // Отримуємо порядкові індекси завдань у цільовій колонці
-  //         const columnTasks = tasks
-  //           .filter((t) => t.columnId === targetColumnId && t.id !== taskId)
-  //           .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
-
-  //         if (!insertBefore) {
-  //           // Додаємо в кінець
-  //           newOrderIndex =
-  //             columnTasks.length > 0
-  //               ? (columnTasks[columnTasks.length - 1].orderIndex || 0) + 1
-  //               : 0;
-  //         } else {
-  //           // Вставка між завданнями
-  //           const nextTaskId = insertBefore.dataset.id;
-  //           const nextTaskIndex = columnTasks.findIndex(
-  //             (t) => t.id === nextTaskId
-  //           );
-
-  //           if (nextTaskIndex === 0) {
-  //             // Вставляємо на початок
-  //             newOrderIndex = (columnTasks[0].orderIndex || 0) - 1;
-  //           } else if (nextTaskIndex > 0) {
-  //             // Обчислюємо середній індекс
-  //             const prevOrderIndex =
-  //               columnTasks[nextTaskIndex - 1].orderIndex || 0;
-  //             const nextOrderIndex = columnTasks[nextTaskIndex].orderIndex || 0;
-  //             newOrderIndex =
-  //               prevOrderIndex + (nextOrderIndex - prevOrderIndex) / 2;
-  //           }
-  //         }
-  //       }
-
-  //       // Оновлюємо завдання з новою позицією
-  //       draggedTask.columnId = targetColumnId;
-  //       draggedTask.orderIndex = newOrderIndex;
-
-  //       if (draggedTask.columnId === "today") {
-  //         draggedTask.date = new Date().toISOString();
-  //       } else if (draggedTask.columnId === "tomorrow") {
-  //         const tomorrow = new Date();
-  //         tomorrow.setDate(tomorrow.getDate() + 1);
-  //         draggedTask.date = tomorrow.toISOString();
-  //       }
-
-  //       saveTasks();
-
-  //       // Нормалізуємо індекси, щоб уникнути проблем з дробовими значеннями
-  //       normalizeOrderIndices();
-
-  //       // Оновлюємо загальний час
-  //       if (oldColumnId !== targetColumnId) {
-  //         updateColumnTotalTime(oldColumnId);
-  //       }
-  //       updateColumnTotalTime(targetColumnId);
-  //       // Оновлюємо відображення
-  //       renderTasks();
-  //     }
-  //   }
 
   // Функція для нормалізації порядкових індексів
   function normalizeOrderIndices() {
@@ -1442,9 +1280,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   addCategoryBtn.addEventListener("click", () => {
     const category = newCategoryInput.value.trim();
-    const category2 = newCategoryInput.getAttribute("value");
-    console.log(category, category2);
-    console.dir(newCategoryInput);
     if (category) {
       addCategoryPill(category);
       newCategoryInput.value = "";
